@@ -201,15 +201,15 @@ def build(html: str) -> str:
         "passe en H2 juste en dessous, sans changer son style.",
     ))
 
-    # 4. Au menu : un seul H2 sans spans, texte d'introduction, alt
-    # Le H2 visible est animé (lettres en spans, aria-hidden) et doublé d'un clone sr-only.
+    # 4. Au menu : H2 optimisé, texte d'introduction, alt
+    # Le H2 visible est animé et doublé d'un clone sr-only : les deux sont conservés, seul le texte change.
+    menu_h2 = "Au menu : qualité, gourmandise et fraîcheur"
     h_menu = soup.find("h2", attrs={"data-has-accessible-clone": "true"})
     clone = h_menu.find_previous_sibling("h2", class_="sr-only")
     if clone:
-        clone.decompose()
-    for attr in ("aria-hidden", "aria-label", "data-has-accessible-clone"):
-        del h_menu[attr]
-    set_text(h_menu, "Au menu : qualité, gourmandise et fraîcheur")
+        set_text(clone, menu_h2)
+    h_menu["aria-label"] = menu_h2
+    set_text(h_menu, menu_h2)
     mark_new(h_menu)
     intro = soup.new_tag("p", attrs={"class": "reco-new maquette-intro"})
     intro.string = (
@@ -221,10 +221,8 @@ def build(html: str) -> str:
     menu_list = intro.find_next_sibling("ul")
     n += 1
     box_h2 = reco(
-        soup, n, "Un seul H2, sans spans, et un vrai contenu",
-        ["Au rendu, la section contient <strong>2 H2 « Au menu »</strong> : un clone masqué (sr-only) et le "
-         "titre visible, animé, découpé lettre par lettre en balises span. En garder un seul, sans span, "
-         "optimisé : <strong>« Au menu : qualité, gourmandise et fraîcheur »</strong>.",
+        soup, n, "H2 optimisé et texte d'introduction",
+        ["H2 : « Au menu » devient <strong>« Au menu : qualité, gourmandise et fraîcheur »</strong>.",
          "Proposition de texte d'introduction ajoutée sous le titre (contour pointillé)."],
     )
     n += 1
@@ -267,10 +265,8 @@ def build(html: str) -> str:
         if img["alt"] in recipes:
             img["alt"] = recipes[img["alt"]]
 
-    # 6. Transition : H2 sans span, alt
+    # 6. Transition : titre conservé, alt uniquement
     h_trans = find_h(soup, "h2", r"^Passer")
-    set_text(h_trans, "Passer à la nourriture fraîche : la transition en 7 jours")
-    mark_new(h_trans)
     trans_alt = {
         "Transition 25%": "Gamelle de transition : 25 % de repas frais Elmut, 75 % d'ancienne alimentation",
         "Transition 50%": "Gamelle de transition : 50 % de repas frais Elmut, 50 % d'ancienne alimentation",
@@ -281,10 +277,8 @@ def build(html: str) -> str:
     }
     n += 1
     box = reco(
-        soup, n, "H2 sans span et alt des images",
-        ["H2 : « Passer au frais, ça se prépare. » devient <strong>« Passer à la nourriture fraîche : "
-         "la transition en 7 jours »</strong>, sans la balise span autour de « au frais ».",
-         "Optimiser les alt des images :"],
+        soup, n, "Optimiser les alt des images",
+        "Les visuels de la transition portent des alt génériques. Proposition :",
         [f"« {a} » → « {b} »" for a, b in trans_alt.items()],
     )
     (h_trans.find_next_sibling() or h_trans).insert_after(box)
@@ -309,16 +303,15 @@ def build(html: str) -> str:
     fri_p["class"] = [c for c in fri_p["class"] if not c.startswith("max-w")] + ["maquette-fri"]
     n += 1
     fri_p.insert_after(reco(
-        soup, n, "Un seul H2, sans spans, et un contenu optimisé",
-        ["La section contient 2 H2 « Nos friandises », dont un caché dans le code. En garder un seul, "
-         "sans span : proposition <strong>« Nos friandises pour chien »</strong>.",
+        soup, n, "H2 optimisé et contenu",
+        ["H2 : « Nos friandises » devient <strong>« Nos friandises pour chien »</strong>.",
          "Proposition de contenu à la place de l'accroche actuelle (contour pointillé), à partir de la fiche "
          "des p'tites saucisses : 70 % de canard, séchage à basse température, 35 kcal par saucisse."],
     ))
 
     # 8. FAQ : H2 renommé, questions en H3, 4 questions ajoutées
     h_faq = find_h(soup, "h2", r"questions")
-    set_text(h_faq, "Questions fréquentes sur la nourriture fraîche pour chien")
+    set_text(h_faq, "Questions fréquentes sur notre nourriture fraîche")
     mark_new(h_faq)
     details = soup.find_all("details")
     for d in details:
@@ -329,8 +322,8 @@ def build(html: str) -> str:
         soup, n, "Questions de la FAQ en H3",
         ["Passer les questions de la FAQ en H3 : elles sont aujourd'hui dans des balises p à l'intérieur "
          "des summary.",
-         "H2 : « Les questions fraîches » devient <strong>« Questions fréquentes sur la nourriture fraîche "
-         "pour chien »</strong>."],
+         "H2 : « Les questions fraîches » devient <strong>« Questions fréquentes sur notre nourriture "
+         "fraîche »</strong>."],
     ))
     new_qa = [
         ("Quelle quantité de nourriture fraîche donner à mon chien par jour ?",
@@ -375,8 +368,7 @@ def build(html: str) -> str:
         soup, n, "Contenu de bas de page (à placer après la FAQ, avant le footer)",
         "Environ 650 mots, centrés sur la requête « nourriture fraîche chien » et ses variantes "
         "(repas frais pour chien, alimentation fraîche pour chien). Liens internes vers les 5 recettes, "
-        "la page Le frais et le tunnel d'essai. Un point reste à valider avec le client : la définition "
-        "de la demi-pension.",
+        "la page Le frais et le tunnel d'essai.",
     ))
 
     # 10. Bandeau et légende en haut de page
@@ -461,8 +453,7 @@ BOTTOM_HTML = """
   <p>Le prix dépend du gabarit de votre chien et de la formule choisie :</p>
   <ul>
    <li><strong>Pension complète</strong> : tous ses repas sont Elmut.</li>
-   <li><strong>Demi-pension</strong> : Elmut couvre une partie de sa ration
-   <span class="maquette-todo">[donnée à vérifier avec le client]</span>.</li>
+   <li><strong>Demi-pension</strong> : Elmut couvre une partie de sa ration.</li>
   </ul>
   <p>Le prix indicatif par jour se calcule en quelques secondes à partir de la race et du poids de votre chien.</p>
 
